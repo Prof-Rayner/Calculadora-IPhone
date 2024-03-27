@@ -1,12 +1,20 @@
 from PyQt5.QtWidgets import *
 from PyQt5.uic import loadUi
 from logger import LogManagement
+import operator
 
 class MeuApp(QMainWindow):
     num1 = 0
     num2 = 0
     numResult = 0
     op = None
+    operacoes = {
+        "+": operator.add,
+        "-": operator.sub,
+        "*": operator.mul,
+        "/": operator.truediv,
+    }
+
 
     def __init__(self):
         super().__init__()
@@ -25,16 +33,18 @@ class MeuApp(QMainWindow):
         self.btn7.clicked.connect(lambda: self.btnClicado(self.btn7))
         self.btn8.clicked.connect(lambda: self.btnClicado(self.btn8))
         self.btn9.clicked.connect(lambda: self.btnClicado(self.btn9))
+        self.btnVirgula.clicked.connect(lambda: self.btnClicado(self.btnVirgula))
         
-        self.btnAdicao.clicked.connect(lambda: self.definirOperacao(self.adicao))
-        self.btnSubtracao.clicked.connect(lambda: self.definirOperacao(self.subtracao))
-        self.btnMultiplicacao.clicked.connect(lambda: self.definirOperacao(self.multiplicacao))
-        self.btnDivisao.clicked.connect(lambda: self.definirOperacao(self.divisao))
+        self.btnAdicao.clicked.connect(lambda: self.definirOperacao("+"))
+        self.btnSubtracao.clicked.connect(lambda: self.definirOperacao("-"))
+        self.btnMultiplicacao.clicked.connect(lambda: self.definirOperacao("*"))
+        self.btnDivisao.clicked.connect(lambda: self.definirOperacao('/'))
 
+        self.btnLimpar.clicked.connect(self.limparDisplay)
+        self.btnInverter.clicked.connect(self.inverter)
         self.btnPorcentagem.clicked.connect(self.porcentagem)
 
         self.btnResultado.clicked.connect(self.mostraResultado)
-        self.btnLimpar.clicked.connect(self.limparDisplay)
         
     
     def mostrarDisplay(self, value):
@@ -50,7 +60,7 @@ class MeuApp(QMainWindow):
         return value
 
 
-    def btnClicado(self, btn):
+    def btnClicado1(self, btn):
         if self.pegarDisplay() == 0:
             self.mostrarDisplay( btn.text() )
         else:
@@ -58,24 +68,34 @@ class MeuApp(QMainWindow):
             self.mostrarDisplay(ultimoValor + btn.text())
 
 
-    def adicao(self):
-        print(f'Soma({self.num1}+{self.num2}) = ', end='')
-        return self.num1 + self.num2
 
+    def btnClicado(self, btn):
+        #Digitando virgula
+        if btn.text() == ',':
+            if isinstance(self.pegarDisplay(), int):
+                ultimoValor = str( self.pegarDisplay() )
+                self.mostrarDisplay( ultimoValor + btn.text() )
 
-    def subtracao(self):
-        print(f'Sub({self.num1} - {self.num2})= ', end='')
-        return self.num1 - self.num2
+        #Digitando numeros
+        else:
+            # Se for numero inteiros
+            if isinstance(self.pegarDisplay(), int):
+                if self.pegarDisplay() == 0:
+                    self.mostrarDisplay( btn.text() )
+                else:
+                    ultimoValor = str( self.pegarDisplay() )
+                    self.mostrarDisplay(ultimoValor + btn.text())
+            
+            # Se for numero float
+            else:
+                if self.entrada.text()[-1] == ",":
+                    ultimoValor = self.entrada.text()
+                    self.mostrarDisplay(ultimoValor + btn.text())
+                
+                else:
+                    ultimoValor = str( self.pegarDisplay() )
+                    self.mostrarDisplay(ultimoValor + btn.text())
 
-
-    def multiplicacao(self):
-        print(f'Mult({self.num1} * {self.num2})= ', end='')
-        return self.num1 * self.num2
-
-
-    def divisao(self):
-        print(f'Div({self.num1} / {self.num2})= ', end='')
-        return self.num1 / self.num2
 
 
     def porcentagem(self):
@@ -85,10 +105,14 @@ class MeuApp(QMainWindow):
         self.mostrarDisplay(percento)
 
 
+    def inverter(self):
+        numAtual = self.pegarDisplay()
+        numAtual *= -1
+        self.mostrarDisplay(numAtual)
 
 
     def definirOperacao(self, operacao):
-        self.op = operacao
+        self.op = self.operacoes[operacao]
         self.num1 = self.pegarDisplay()
         self.num2 = 0
         self.mostrarDisplay(0)
@@ -97,7 +121,7 @@ class MeuApp(QMainWindow):
     def resultado(self):
         if self.op:
             self.num2 = self.pegarDisplay()
-            return self.op()
+            return self.op(self.num1, self.num2)
         else:
             print('nao tem operacao feita')
     
@@ -109,7 +133,7 @@ class MeuApp(QMainWindow):
             else:
                 self.num2 = self.pegarDisplay()
 
-            self.numResult = self.op()
+            self.numResult = self.op(self.num1, self.num2)
             self.mostrarDisplay(self.numResult)
             print(self.numResult)
         
@@ -122,9 +146,9 @@ class MeuApp(QMainWindow):
         self.mostrarDisplay(0)
 
 
+
 if __name__ == '__main__':
     app = QApplication([])
     window = MeuApp()
     window.show()
     app.exec_()
-
