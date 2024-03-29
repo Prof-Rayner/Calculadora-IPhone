@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.uic import loadUi
 from logger import LogManagement
 import operator
+from functools import partial
 
 class MeuApp(QMainWindow):
     num1 = 0
@@ -9,30 +10,18 @@ class MeuApp(QMainWindow):
     numResult = 0
     op = None
     operacoes = {
-        "+": operator.add,
-        "-": operator.sub,
-        "*": operator.mul,
-        "/": operator.truediv,
+        "+": operator.add, "-": operator.sub,
+        "*": operator.mul, "/": operator.truediv,
     }
-
 
     def __init__(self):
         super().__init__()
         loadUi('interface.ui', self)
-        self.setAcoes()
 
+        for i in range(10):
+            btn = getattr(self, f'btn{i}')
+            btn.clicked.connect( partial(self.btnClicado, btn) )
 
-    def setAcoes(self):
-        self.btn0.clicked.connect(lambda: self.btnClicado(self.btn0))
-        self.btn1.clicked.connect(lambda: self.btnClicado(self.btn1))
-        self.btn2.clicked.connect(lambda: self.btnClicado(self.btn2))
-        self.btn3.clicked.connect(lambda: self.btnClicado(self.btn3))
-        self.btn4.clicked.connect(lambda: self.btnClicado(self.btn4))
-        self.btn5.clicked.connect(lambda: self.btnClicado(self.btn5))
-        self.btn6.clicked.connect(lambda: self.btnClicado(self.btn6))
-        self.btn7.clicked.connect(lambda: self.btnClicado(self.btn7))
-        self.btn8.clicked.connect(lambda: self.btnClicado(self.btn8))
-        self.btn9.clicked.connect(lambda: self.btnClicado(self.btn9))
         self.btnVirgula.clicked.connect(lambda: self.btnClicado(self.btnVirgula))
         
         self.btnAdicao.clicked.connect(lambda: self.definirOperacao("+"))
@@ -43,7 +32,6 @@ class MeuApp(QMainWindow):
         self.btnLimpar.clicked.connect(self.limparDisplay)
         self.btnInverter.clicked.connect(self.inverter)
         self.btnPorcentagem.clicked.connect(self.porcentagem)
-
         self.btnResultado.clicked.connect(self.mostraResultado)
         
     
@@ -60,47 +48,28 @@ class MeuApp(QMainWindow):
         return value
 
 
-    def btnClicado1(self, btn):
-        if self.pegarDisplay() == 0:
-            self.mostrarDisplay( btn.text() )
-        else:
-            ultimoValor = str( self.pegarDisplay() )
-            self.mostrarDisplay(ultimoValor + btn.text())
-
-
-
     def btnClicado(self, btn):
+        ultimoValor = str( self.pegarDisplay() )
         #Digitando virgula
         if btn.text() == ',':
-            if isinstance(self.pegarDisplay(), int):
-                ultimoValor = str( self.pegarDisplay() )
-                self.mostrarDisplay( ultimoValor + btn.text() )
-
+            if isinstance(self.pegarDisplay(), float):
+                return
         #Digitando numeros
         else:
             # Se for numero inteiros
             if isinstance(self.pegarDisplay(), int):
                 if self.pegarDisplay() == 0:
-                    self.mostrarDisplay( btn.text() )
-                else:
-                    ultimoValor = str( self.pegarDisplay() )
-                    self.mostrarDisplay(ultimoValor + btn.text())
-            
+                    ultimoValor = ''
             # Se for numero float
             else:
                 if self.entrada.text()[-1] == ",":
                     ultimoValor = self.entrada.text()
-                    self.mostrarDisplay(ultimoValor + btn.text())
-                
-                else:
-                    ultimoValor = str( self.pegarDisplay() )
-                    self.mostrarDisplay(ultimoValor + btn.text())
-
+        self.mostrarDisplay(ultimoValor + btn.text())
 
 
     def porcentagem(self):
         percento = self.pegarDisplay() / 100
-        if self.op == self.adicao or self.op == self.subtracao:
+        if self.op == operator.add or self.op == operator.sub:
             percento = self.num1 * percento
         self.mostrarDisplay(percento)
 
@@ -135,7 +104,7 @@ class MeuApp(QMainWindow):
 
             self.numResult = self.op(self.num1, self.num2)
             self.mostrarDisplay(self.numResult)
-            print(self.numResult)
+            print(f"({self.num1}, {self.num2}): {self.numResult}")
         
 
     def limparDisplay(self):
